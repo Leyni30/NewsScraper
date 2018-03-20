@@ -1,0 +1,171 @@
+<div class="jumbotron" align="center">
+	<h1>Saved Atlas Obscura Articles</h1>
+    
+     <a href="/"><button class="btn btn-secondary">Back Home</button></a>
+ </div>
+
+<div class="content-wrap">
+
+	{{#each savedArticles}}
+		<div class="thumbnail" id="{{_id}}">
+	        <a href="{{image}}" target="_blank">
+	          <img src="{{image}}" alt="Lights" style="width:100%">
+	        </a>
+	        <div class="content">
+	            <h3>{{title}}</h3>
+	            <p>{{description}}</p>
+	            <p>{{date}}</p>
+	            <a href="{{link}}"><button class="btn btn-primary">Read More</button></a>
+	            <button class="btn btn-primary articleNotes">Notes</button>
+	           {{!--  <button {{#if saved}}disabled{{/if}} id="saveArticle" class="btn btn-primary {{#if saved}}disabled{{/if}}" data-status="{{saved}}" data-articleId="{{_id}}">
+	            	{{#if saved}}Already Saved{{else}} Save{{/if}}
+	        	</button> --}}
+	        </div>
+	    
+      	</div>
+	{{/each}}
+
+</div>
+<!-- Modal -->
+<div id="noteModal" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h4 class="modal-title"></h4>
+      </div>
+      <div class="modal-body">
+       <div class="existingNotes"></div>
+       <div class="newNote">
+       	<form>
+       		<div class="form-group">
+			  <label for="usr">new note</label>
+			  <textarea type="text" class="form-control note-body" style="width: 100%"></textarea>
+			</div>
+			<button class="btn btn-primary submit-note">Add Note</button>
+       	</form>
+       </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// show modal with existing notes for selected article.
+// show form to add a new note to the article
+$(".articleNotes").on("click", function(){
+	// find buttons parent container which is the thumbnail
+	var articleID = $(this).parents(".thumbnail").attr("id")
+	//console.log(articleID)
+
+	// which every article is selected will have a reflecting id to the data-articleID
+	$("#noteModal").attr("data-articleId", articleID)
+	
+	// query the database for all the notes that are related to the selected article by id
+	//console.log("/article/"+articleID+"/notes")
+	$.get("/article/"+articleID+"/notes", function(notesArray){
+		//console.log(notes)
+
+		// empty any content that is in the modal body
+		$(".existingNotes").empty();
+
+		// check if there are any notes that come back from the query
+		// if there is loop through them and add them to the modal body
+		if(notesArray.length>0){
+			notesArray.forEach(function(noteObj){
+				var craetedAt = noteObj.createdAt.split("-")
+				var date = craetedAt[1] + "/" + craetedAt[0]
+				//console.log(noteObj)
+				$(".existingNotes").append(`
+					<div class="panel panel-default" id="${noteObj._id}">
+					  <div class="panel-body">
+					  <button class="btn btn-danger delete-note" style="float:right">X</button>
+					  	<p>${noteObj.body}</p>
+					  	<p>${date}</p>
+					  	
+					  </div>
+					</div>`)
+			})
+
+			$("#noteModal").modal("show")
+		}
+		// if there aren't any notes that come back display a message to the user
+		else {
+			$(".existingNotes").append(`
+				<div class="panel panel-default" id="no-notes-${articleID}">
+				  <div class="panel-body">No notes for this article yet!</div>
+				</div>
+			`)
+			$("#noteModal").modal("show")
+		}
+	})	
+})
+
+// get the value from the input in the modal
+// send the data to the server to save to the database
+// append create not to modal
+$(document).on("click", ".submit-note", function(event){
+	event.preventDefault()
+	//console.log("clciky")
+
+	// get the id of the selected article 
+	var articleID = $("#noteModal").attr("data-articleId");
+	//console.log(articleID)
+
+	// get the user input from the modal
+	// get rid of white space
+	var userInput = $(".note-body").val().trim();
+	//console.log(userInput)
+	var newNote = {
+		body: userInput,
+		articleID: articleID
+	}
+	
+	// only send data to server if value is not empty
+	if(newNote.body.length>0){
+		// send the user input to the server to be saved in the note model
+		$.post("/create/note/", newNote, function(response){
+			console.log(response)
+			var craetedAt = response.createdAt.split("-")
+				var date = craetedAt[1] + "/" + craetedAt[0]
+				//console.log(noteObj)
+
+				// remove no notes text
+				$("#no-notes-"+ articleID).remove()
+
+				$(".existingNotes").append(`
+					<div class="panel panel-default" id="${response._id}">
+					  <div class="panel-body">
+					  	<button class="btn btn-danger delete-note" style="float:right">X</button>
+					  	<p>${response.body}</p>
+					  	<p>${date}</p>
+					  	
+					  </div>
+					</div>
+				`);
+				$(".note-body").val("")
+
+		})
+	}	
+})
+
+
+// delete note from database
+$(document).on("click", ".delete-note", function(){
+	var noteId = $(this).parents(".panel").attr("id")
+	console.log(noteId)
+
+	// send note if tot he server and delete note from db
+	$.get("/delete/note/"+noteId, function(response){
+		console.log(response)
+		// remove from modal without refreshing
+		$("#"+response._id).remove()
+	})
+})
+
+</script>

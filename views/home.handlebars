@@ -1,0 +1,49 @@
+<div class="jumbotron" align="center">
+	<h1>Atlas Obscura Scrapper</h1>
+    <a href="/scrape"><button class="btn btn-secondary">Scrape Articles</button></a>
+     <a href="/saved"><button class="btn btn-secondary">View Saved Articles</button></a>
+ </div>
+ <div class="content-wrap">
+	{{#each articles}}
+		<div class="thumbnail">
+	        <a href="{{image}}" target="_blank">
+	          <img src="{{image}}" alt="Lights" style="width:100%">
+	        </a>
+	        <div class="content">
+	            <h3>{{title}}</h3>
+	            <p>{{description}}</p>
+	            <p>{{date}}</p>
+	            <a href="{{link}}"><button class="btn btn-primary">Read More</button></a>
+	            <button {{#if saved}}disabled{{/if}} id="saveArticle" class="btn btn-primary {{#if saved}}disabled{{/if}}" data-status="{{saved}}" data-articleId="{{_id}}">
+	            	{{#if saved}}Already Saved{{else}} Save{{/if}}
+	        	</button>
+	        </div>
+	    
+      	</div>
+	{{/each}}
+</div>
+<script>
+	
+$(document).on("click", "#saveArticle",function(){
+	var selectedButton = $(this)
+	var status = $(this).data("status")
+	var articleId = $(this).attr("data-articleId")
+	console.log("outside")
+	if(status === false){
+
+		console.log(status)
+		var saveArticle = {
+			saved: true,
+		}
+		console.log(articleId)
+		$.post(`/save/${articleId}`,saveArticle, function(res){
+			console.log(res)
+			$(selectedButton).attr("data-status", true).text("Already Saved").addClass("disabled").prop("disabled", true)
+
+		})
+	} else {
+		console.log("already saved")
+	}
+})
+
+</script>

@@ -1,8 +1,37 @@
 body {
-  padding: 50px;
   font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
 }
 
 a {
   color: #00B7FF;
 }
+
+.content-wrap {
+
+    max-width: 100%;
+}
+@media screen and (min-width: 40em) {
+.thumbnail {
+	float: left;
+	min-height: 550px;
+    width: 30%;
+    margin: 10px;
+    padding: 10px;
+}
+
+}
+/* Small only */
+@media screen and (max-width: 39.9375em) {
+	.thumbnail {
+		float: left;
+		min-height: auto;
+	    width: 97%;
+	    margin: 15px 5px;
+	    padding: 10px;
+	}
+	.btn-primary {
+		width: 100%;
+		margin: 5px auto;
+	}
+}
+
